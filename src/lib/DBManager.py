@@ -73,7 +73,7 @@ class PgsqlConnection:
 
     # copy_expert(this method can use both of copy_to, copy_from method)
     # from psycopg2==2.9.0 can't use copy_to, copy_from method with schema.
-    # PgSQL Copy(default col_delimeter = \t, row_delimeter = \n)
+    # PgSQL Copy(default col_delimiter = \t, row_delimiter = \n)
     # option 0 = copy_to, option 1 = copy_from
     def copy_expert(self, option, target, file_path):
         result = False
