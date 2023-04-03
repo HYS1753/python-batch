@@ -8,9 +8,9 @@ import logging
 # logger Setting
 logger = logging.getLogger(__name__)
 
-class Convert2CopyFileManager:
+class DB2FileConverter:
     def __init__(self, fields=None, lines=None):
-        logger.debug("Convert2CopyFile start.")
+        logger.debug("DB2FileConverter start.")
 
         # Copy File 의 구분자 설정 (default : fields(\t), lines(\n))
         self.fields = "\t" if fields is not None else fields
@@ -19,5 +19,5 @@ class Convert2CopyFileManager:
         logger.debug(f"Copy file delimiter set each {self.fields} and {self.lines}")
 
     def __del__(self):
-        logger.debug("Convert2CopyFile end.")
+        logger.debug("DB2FileConverter end.")
 
