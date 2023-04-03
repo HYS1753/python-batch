@@ -4,11 +4,13 @@ import os
 
 srcPath = os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 logPath = os.path.join(srcPath, "logs")
+nowDate = datetime.datetime.now().strftime("%Y%m%d")
 class LogManager:
     # method [0: console only, 1: file only, 2: console + file]
-    def __init__(self, METHOD=None, PATH=None, LEVEL=None):
+    def __init__(self, METHOD=None, FILENAME=None, LEVEL=None):
+
         METHOD = 2 if METHOD is None else METHOD
-        PATH = os.path.join(logPath, datetime.datetime.now().strftime("%Y%m%d") + "-python-batch.log") if PATH is None else PATH
+        PATH = os.path.join(logPath, f"{nowDate}-python-batch.log") if FILENAME is None else os.path.join(logPath, f"{nowDate}-{FILENAME}.log")
         LEVEL = "DEBUG" if LEVEL is None else LEVEL
 
         # Make root logger
@@ -75,7 +77,7 @@ class LogManager:
 
 
 def main():
-    logger = LogManager()
+    logger = LogManager(FILENAME='test')
     logger.trace_log("debug", "hello")
 
 if __name__ == '__main__':
