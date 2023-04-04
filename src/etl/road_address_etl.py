@@ -54,6 +54,45 @@ def road_name_address_etl(logger, f_path, f_name, field_sep, line_sep):
         logger.trace_log("error", f"Exception: {e}")
     return result
 
+def jibun_address_etl(logger, f_path, f_name, field_sep, line_sep):
+    result = False
+    logger.trace_log("info", f"{f_name} jibun_address etl Start")
+    try:
+        s_time = time.time()
+        # jibun rnaddr file format
+        # 도로명주소관리번호|법정동코드|시도명|시군구명|법정읍면동명|법정리명|산여부|
+        # 지번본번(번지)|지번부번(호)|도로명코드|지하여부|건물본번|건물부번|이동사유코드
+        with open(os.path.join(f_path, f"{f_name}.copy"), 'w') as wf:
+            with open(os.path.join(f_path, f_name), 'r') as rf:
+                for line in rf.readlines():
+                    # wf.write(line.replace('|', field_sep) + line_sep)
+                    now_time = datetime.now().strftime("%y-%m-%d %H:%M:%S")
+                    line_list = line.split('|')
+                    extn_line_list = list()
+                    extn_line_list.append(line_list[0])  # rna_mgmt_num | 도로명주소관리번호
+                    extn_line_list.append(line_list[1])  # legal_dong_code | 법정동코드
+                    extn_line_list.append(line_list[2])  # sido | 시도명
+                    extn_line_list.append(line_list[3])  # sigungu | 시군구명
+                    extn_line_list.append(line_list[4])  # eupmyeondong | 읍면동명
+                    extn_line_list.append(line_list[5])  # li | 리명
+                    extn_line_list.append(line_list[6])  # san_ysno | 산여부
+                    extn_line_list.append(line_list[7])  # land_main_num | 지번본번(번지)
+                    extn_line_list.append(line_list[8])  # land_sub_num | 지번부번(호)
+                    extn_line_list.append(line_list[9])  # rna_code | 도로명코드
+                    extn_line_list.append(line_list[10])  # basement_ysno | 지하여부
+                    extn_line_list.append(line_list[11])  # bldg_main_num | 건물본번
+                    extn_line_list.append(line_list[12])  # bldg_sub_num | 건물부번
+                    extn_line_list.append("python-batch")  # cret_id | 생성자ID
+                    extn_line_list.append(now_time)  # cret_dttm | 생성일시
+                    extn_line_list.append("python-batch")  # amnd_id | 수정자ID
+                    extn_line_list.append(now_time)  # amnd_dttm | 수정일시
+                    wf.write(field_sep.join(extn_line_list) + line_sep)
+        result = True
+        logger.trace_log("info", f"{f_name} jibun_address etl Success. {time.time() - s_time:.4f} sec")
+    except Exception as e:
+        logger.trace_log("error", f"Exception: {e}")
+    return result
+
 def main():
     # Custom logger setting
     logger = LogManager(FILENAME='road_address_etl', LEVEL='INFO')
