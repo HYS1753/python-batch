@@ -87,7 +87,7 @@ class PgsqlConnection:
                     cur.copy_expert(sql=f"COPY {target} TO STDOUT", file=infile)
                 elif option == self.COPYFROM:
                     infile = open(file_path, 'r')
-                    cur.copy_expert(sql=f"COPY {target} TO STDIN NULL AS 'None'", file=infile)
+                    cur.copy_expert(sql=f"COPY {target} FROM STDIN NULL AS 'None'", file=infile)
                 else:
                     logger.debug("Incorrect copy_expert option")
                     return result
