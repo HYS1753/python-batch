@@ -1,6 +1,7 @@
 import configparser
 import os
 import psycopg2
+import pyodbc
 import json
 import logging
 from psycopg2.extras import DictCursor
@@ -93,14 +94,75 @@ class PgsqlConnection:
                     return result
         return True
 
+# Sybase
+class SybaseConnection:
+
+    # 클래스 초기화
+    def __init__(self, DB_HOST=None, DB_PORT=None, DB_NAME=None, DB_USER=None, DB_PASSWORD=None):
+        # 아무 설정 값이 없으면 PGSQL_DB 기본 값으로 DB Connection 설정
+        DB_HOST = envConfig['SYBASE']['DB_HOST'] if DB_HOST is None else DB_HOST
+        DB_PORT = envConfig['SYBASE']['DB_PORT'] if DB_PORT is None else DB_PORT
+        DB_NAME = envConfig['SYBASE']['DB_NAME'] if DB_NAME is None else DB_NAME
+        DB_USER = envConfig['SYBASE']['DB_USER'] if DB_USER is None else DB_USER
+        DB_PASSWORD = envConfig['SYBASE']['DB_PASSWORD'] if DB_PASSWORD is None else DB_PASSWORD
+        DB_DRIVER = "{Adaptive Server Enterprise}"
+        DB_CHARSET = "eucksc"
+
+        conn_string = "driver={0};server={1};database={2};port={3};uid={4};pwd={5};charset={6}" \
+            .format(DB_DRIVER, DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD, DB_CHARSET)
+
+        print(conn_string)
+
+        logger.debug(f"DB Connection Info - HOST/PORT : {DB_HOST}:{DB_PORT} DATABASE : {DB_NAME} USER : {DB_USER}")
+        self.conn = pyodbc.connect(conn_string)
+        # 커서 딕셔너리 형태로 변경
+        self.cursor = self.conn.cursor()
+
+    def __del__(self):
+        if self.cursor is not None:
+            self.cursor.close()
+        self.conn.close()
+        logger.debug("DB Connection close")
+
+    def excute_read_qry(self, query, args=None, col_info=None):
+        if args is None:
+            args = ()
+        if col_info is None:
+            col_info = False
+        self.cursor.execute(query, args)
+        row = self.cursor.fetchall()
+        if col_info:
+            column_names = [desc[0] for desc in self.cursor.description]
+            return row, column_names
+        else:
+            return row
+
+    # Auto commit
+    def excute_write_qry(self, query, args=None):
+        if args is None:
+            args = ()
+        with self.conn:
+            with self.cursor as cur:
+                return cur.execute(query, args)
+
+
 def main():
-    db = PgsqlConnection()
-    query = """select * from dev.tb_road_name_addr trna limit 10"""
+    # POSTGRESQL
+    #db = PgsqlConnection()
+    #query = """select * from dev.tb_road_name_addr trna limit 10"""
+
+    # SYBASE
+    db = SybaseConnection()
+    query = """select top 10 * from dbo.TM_CMDT AT ISOLATION 0"""
     try:
         if db.conn.closed != 0:
             db = PgsqlConnection()
         rows = db.excute_read_qry(query)
         print(rows)
+        print("-----------------------------------------------")
+        rows, columns = db.excute_read_qry(query, col_info=True)
+        print(rows)
+        print(columns)
     except Exception as e:
         print(f"Error occurred : {str(e)}")
 
