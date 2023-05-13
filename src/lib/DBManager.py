@@ -2,7 +2,7 @@ import configparser
 import os
 import psycopg2
 import pyodbc
-import pymysql
+import MySQLdb
 import json
 import logging
 from psycopg2.extras import DictCursor
@@ -112,12 +112,13 @@ class MysqlConnection:
         DB_PASSWORD = envConfig['MYSQL']['DB_PASSWORD'] if DB_PASSWORD is None else DB_PASSWORD
         DB_CHARSET = envConfig['MYSQL']['DB_CHARSET'] if DB_CHARSET is None else DB_CHARSET # ex.utf8
 
-        # pymysql의 connect() 메소드는 string type connection info 파싱 지원 안해 직접 삽입.
+        # MySQLdb connect() 메소드는 string type connection info 파싱 지원 안해 직접 삽입.
+        # MySQLdb.connect only supports the former option. (https://mysql-python.sourceforge.net/MySQLdb.html)
         # conn_string = "host='{0}', port={1}, db='{2}', user='{3}', passwd='{4}', charset='{5}'" \
         #     .format(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_CHARSET)
 
         logger.debug(f"DB Connection Info - HOST/PORT : {DB_HOST}:{DB_PORT} DATABASE : {DB_NAME} USER : {DB_USER}")
-        self.conn = pymysql.connect(
+        self.conn = MySQLdb.connect(
             host=DB_HOST,
             port=int(DB_PORT),
             db=DB_NAME,
