@@ -2,6 +2,7 @@ import configparser
 import os
 import psycopg2
 import pyodbc
+import pymysql
 import json
 import logging
 from psycopg2.extras import DictCursor
@@ -45,12 +46,16 @@ class PgsqlConnection:
         self.conn.close()
         logger.debug("DB Connection close")
 
-    def excute_read_qry(self, query, args=None):
+    def excute_read_qry(self, query, args=None, col_info=False):
         if args is None:
             args = ()
         self.cursor.execute(query, args)
         row = self.cursor.fetchall()
-        return row
+        if col_info:
+            column_names = [desc[0] for desc in self.cursor.description]
+            return row, column_names
+        else:
+            return row
 
     # Auto commit
     def excute_write_qry(self, query, args=None):
@@ -98,20 +103,18 @@ class PgsqlConnection:
 class SybaseConnection:
 
     # 클래스 초기화
-    def __init__(self, DB_HOST=None, DB_PORT=None, DB_NAME=None, DB_USER=None, DB_PASSWORD=None):
+    def __init__(self, DB_HOST=None, DB_PORT=None, DB_NAME=None, DB_USER=None, DB_PASSWORD=None, DB_DRIVER=None, DB_CHARSET=None):
         # 아무 설정 값이 없으면 PGSQL_DB 기본 값으로 DB Connection 설정
         DB_HOST = envConfig['SYBASE']['DB_HOST'] if DB_HOST is None else DB_HOST
         DB_PORT = envConfig['SYBASE']['DB_PORT'] if DB_PORT is None else DB_PORT
         DB_NAME = envConfig['SYBASE']['DB_NAME'] if DB_NAME is None else DB_NAME
         DB_USER = envConfig['SYBASE']['DB_USER'] if DB_USER is None else DB_USER
         DB_PASSWORD = envConfig['SYBASE']['DB_PASSWORD'] if DB_PASSWORD is None else DB_PASSWORD
-        DB_DRIVER = "{Adaptive Server Enterprise}"
-        DB_CHARSET = "eucksc"
+        DB_DRIVER = envConfig['SYBASE']['DB_DRIVER'] if DB_DRIVER is None else DB_DRIVER # ex.{Adaptive Server Enterprise}
+        DB_CHARSET = envConfig['SYBASE']['DB_CHARSET'] if DB_CHARSET is None else DB_CHARSET # ex.eucksc
 
         conn_string = "driver={0};server={1};database={2};port={3};uid={4};pwd={5};charset={6}" \
             .format(DB_DRIVER, DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD, DB_CHARSET)
-
-        print(conn_string)
 
         logger.debug(f"DB Connection Info - HOST/PORT : {DB_HOST}:{DB_PORT} DATABASE : {DB_NAME} USER : {DB_USER}")
         self.conn = pyodbc.connect(conn_string)
@@ -148,12 +151,8 @@ class SybaseConnection:
 
 def main():
     # POSTGRESQL
-    #db = PgsqlConnection()
-    #query = """select * from dev.tb_road_name_addr trna limit 10"""
-
-    # SYBASE
-    db = SybaseConnection()
-    query = """select top 10 * from dbo.TM_CMDT AT ISOLATION 0"""
+    db = PgsqlConnection()
+    query = """select * from dev.tb_road_name_addr trna limit 2"""
     try:
         if db.conn.closed != 0:
             db = PgsqlConnection()
@@ -165,6 +164,29 @@ def main():
         print(columns)
     except Exception as e:
         print(f"Error occurred : {str(e)}")
+    finally:
+        db.conn.commit()
+        del(db)
+
+    # SYBASE
+    # db = SybaseConnection()
+    # query = """select top 10 * from dbo.TM_CMDT AT ISOLATION 0"""
+    # try:
+    #     if db.conn.closed != 0:
+    #         db = SybaseConnection()
+    #     rows = db.excute_read_qry(query)
+    #     print(rows)
+    #     print("-----------------------------------------------")
+    #     rows, columns = db.excute_read_qry(query, col_info=True)
+    #     print(rows)
+    #     print(columns)
+    # except Exception as e:
+    #     print(f"Error occurred : {str(e)}")
+    # finally:
+    #     db.conn.commit()
+    #     del(db)
+
+    pass
 
 if __name__ == "__main__":
     main()
