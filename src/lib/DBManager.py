@@ -99,6 +99,61 @@ class PgsqlConnection:
                     return result
         return True
 
+# Mysql
+class MysqlConnection:
+
+    # 클래스 초기화
+    def __init__(self, DB_HOST=None, DB_PORT=None, DB_NAME=None, DB_USER=None, DB_PASSWORD=None, DB_CHARSET=None):
+        # 아무 설정 값이 없으면 PGSQL_DB 기본 값으로 DB Connection 설정
+        DB_HOST = envConfig['MYSQL']['DB_HOST'] if DB_HOST is None else DB_HOST
+        DB_PORT = envConfig['MYSQL']['DB_PORT'] if DB_PORT is None else DB_PORT
+        DB_NAME = envConfig['MYSQL']['DB_NAME'] if DB_NAME is None else DB_NAME
+        DB_USER = envConfig['MYSQL']['DB_USER'] if DB_USER is None else DB_USER
+        DB_PASSWORD = envConfig['MYSQL']['DB_PASSWORD'] if DB_PASSWORD is None else DB_PASSWORD
+        DB_CHARSET = envConfig['MYSQL']['DB_CHARSET'] if DB_CHARSET is None else DB_CHARSET # ex.utf8
+
+        # pymysql의 connect() 메소드는 string type connection info 파싱 지원 안해 직접 삽입.
+        # conn_string = "host='{0}', port={1}, db='{2}', user='{3}', passwd='{4}', charset='{5}'" \
+        #     .format(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_CHARSET)
+
+        logger.debug(f"DB Connection Info - HOST/PORT : {DB_HOST}:{DB_PORT} DATABASE : {DB_NAME} USER : {DB_USER}")
+        self.conn = pymysql.connect(
+            host=DB_HOST,
+            port=int(DB_PORT),
+            db=DB_NAME,
+            user=DB_USER,
+            passwd=DB_PASSWORD,
+            charset=DB_CHARSET)
+        # 커서 생성
+        self.cursor = self.conn.cursor()
+
+    def __del__(self):
+        if self.cursor is not None:
+            self.cursor.close()
+        self.conn.close()
+        logger.debug("DB Connection close")
+
+    def excute_read_qry(self, query, args=None, col_info=None):
+        if args is None:
+            args = ()
+        if col_info is None:
+            col_info = False
+        self.cursor.execute(query, args)
+        row = self.cursor.fetchall()
+        if col_info:
+            column_names = [desc[0] for desc in self.cursor.description]
+            return row, column_names
+        else:
+            return row
+
+    # Auto commit
+    def excute_write_qry(self, query, args=None):
+        if args is None:
+            args = ()
+        with self.conn:
+            with self.cursor as cur:
+                return cur.execute(query, args)
+
 # Sybase
 class SybaseConnection:
 
@@ -118,7 +173,7 @@ class SybaseConnection:
 
         logger.debug(f"DB Connection Info - HOST/PORT : {DB_HOST}:{DB_PORT} DATABASE : {DB_NAME} USER : {DB_USER}")
         self.conn = pyodbc.connect(conn_string)
-        # 커서 딕셔너리 형태로 변경
+        # 커서 생성
         self.cursor = self.conn.cursor()
 
     def __del__(self):
@@ -151,11 +206,29 @@ class SybaseConnection:
 
 def main():
     # POSTGRESQL
-    db = PgsqlConnection()
-    query = """select * from dev.tb_road_name_addr trna limit 2"""
+    # db = PgsqlConnection()
+    # query = """select * from dev.tb_road_name_addr trna limit 2"""
+    # try:
+    #     if db.conn.closed != 0:
+    #         db = PgsqlConnection()
+    #     rows = db.excute_read_qry(query)
+    #     print(rows)
+    #     print("-----------------------------------------------")
+    #     rows, columns = db.excute_read_qry(query, col_info=True)
+    #     print(rows)
+    #     print(columns)
+    # except Exception as e:
+    #     print(f"Error occurred : {str(e)}")
+    # finally:
+    #     db.conn.commit()
+    #     del(db)
+
+    # MYSQL
+    db = MysqlConnection()
+    query = """select * from test limit 2"""
     try:
-        if db.conn.closed != 0:
-            db = PgsqlConnection()
+        if not db.conn.open:
+            db = MysqlConnection()
         rows = db.excute_read_qry(query)
         print(rows)
         print("-----------------------------------------------")
