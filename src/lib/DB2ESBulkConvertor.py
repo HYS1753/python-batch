@@ -70,6 +70,9 @@ def main():
         print(columns)
     except Exception as e:
         print(f"Error occurred : {str(e)}")
+    finally:
+        db.conn.commit()
+        del (db)
 
 
 if __name__ == "__main__":

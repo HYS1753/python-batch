@@ -6,5 +6,6 @@
 src/config
 src/logs
 src/data
+src/ssh
 venv/
 .idea/
