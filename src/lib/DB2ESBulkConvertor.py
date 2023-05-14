@@ -59,13 +59,13 @@ class DB2ESBulkConvertor:
 
 
 def main():
-    query = """select * from dev.tb_road_name_addr trna limit 100"""
+    query = """select * from dev.tb_road_name_addr trna limit 5"""
     db = PgsqlConnection()
     try:
         if db.conn.closed != 0:
             db = PgsqlConnection()
         gen = DB2ESBulkConvertor(db=db, fields="$$^^||", lines="\n")
-        result, columns = gen.generate_bulkfile(query, os.path.join('data', 'es_data', 'test_es'))
+        result, columns = gen.generate_bulkfile(query, os.path.join('data', 'es_data', 'test_es.txt'))
         print(result)
         print(columns)
     except Exception as e:
