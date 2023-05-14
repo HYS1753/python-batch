@@ -1,7 +1,7 @@
 import os
 import logging
 import time
-from DBManager import SybaseConnection
+from DBManager import SybaseConnection, PgsqlConnection
 
 # copy file 형태로 저장 프로세스
 # postgresql default sep : .txt('\t', '\n'), .csv(',', '\n')
@@ -9,6 +9,7 @@ from DBManager import SybaseConnection
 
 # logger Setting
 logger = logging.getLogger(__name__)
+src_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 
 class DB2ESBulkConvertor:
     def __init__(self, db, fields=None, lines=None):
@@ -19,8 +20,6 @@ class DB2ESBulkConvertor:
         self.lines = "\n" if lines is None else lines
         # DB 설정
         self.db = db
-        # File 저장 위치 지정
-        self.work_dir = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), 'data', 'es_data')
 
         print(f"Copy file delimiter set each {self.fields} and {self.lines}")
 
@@ -28,7 +27,8 @@ class DB2ESBulkConvertor:
         logger.debug("DB2ESBulkConvertor end.")
 
     def generate_bulkfile(self, query, filename):
-        logger.debug(f"Generate Bulk file start. File name : {filename}")
+        file_path = os.path.join(src_path, filename)
+        logger.debug(f"Generate Bulk file start. File path : {file_path}")
         result = False
         columns = []
         try:
@@ -36,7 +36,7 @@ class DB2ESBulkConvertor:
             if len(rows) > 0:
                 result_count = 0
                 s_time = time.time()
-                with open(os.path.join(self.work_dir,filename), 'w') as wf:
+                with open(file_path, 'w') as wf:
                     for row in rows:
                         for index, data in enumerate(row):
                             if type(data) == type(''):
@@ -59,13 +59,13 @@ class DB2ESBulkConvertor:
 
 
 def main():
-    query = """select top 10 * from ABC AT ISOLATION 0"""
-    db = SybaseConnection()
+    query = """select * from dev.tb_road_name_addr trna limit 100"""
+    db = PgsqlConnection()
     try:
         if db.conn.closed != 0:
-            db = SybaseConnection()
+            db = PgsqlConnection()
         gen = DB2ESBulkConvertor(db=db, fields="$$^^||", lines="\n")
-        result, columns = gen.generate_bulkfile(query, "test_es.txt")
+        result, columns = gen.generate_bulkfile(query, os.path.join('data', 'es_data', 'test_es'))
         print(result)
         print(columns)
     except Exception as e:
