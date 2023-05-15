@@ -22,7 +22,7 @@ class InitError(Exception):
         return self.msg
 
 # ElasticSearch
-class ESBulkFile:
+class ESFileBulk:
 
     # 클래스 초기화
     def __init__(self, ES=None, INDEX=None, SCHEME=None, FILE_PATH=None, SEP=None):
@@ -41,7 +41,7 @@ class ESBulkFile:
             print("Variable initialize error. [" + str(err) + "]")
 
     def __del__(self):
-        logger.debug("ESBulkFile class destroyed")
+        logger.debug("ESFileBulk class destroyed")
 
     def generateSourceError(self):
         print("error")
@@ -84,7 +84,7 @@ def main():
              'bldg_main_num', 'bldg_sub_num', 'admin_dong_code', 'admin_dong_name',
              'zip_code', 'prev_rna', 'effect_date', 'apt_ysno', 'bldg_name',
              'cret_id', 'cret_dttm', 'amnd_id', 'amnd_dttm']
-    bulk = ESBulkFile(ES=es.conn, INDEX="bulk_test", SCHEME=scheme,
+    bulk = ESFileBulk(ES=es.conn, INDEX="bulk_test", SCHEME=scheme,
                       FILE_PATH=os.path.join('data', 'es_data', 'test_es.txt'),
                       SEP="$$^^||")
     # bulk.generate_docs()
