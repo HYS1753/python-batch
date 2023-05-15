@@ -11,9 +11,9 @@ from DBManager import SybaseConnection, PgsqlConnection
 logger = logging.getLogger(__name__)
 src_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 
-class DB2ESBulkConvertor:
+class ESDB2FileConvertor:
     def __init__(self, db, fields=None, lines=None):
-        logger.debug("DB2ESBulkConvertor start.")
+        logger.debug("ESDB2FileConvertor start.")
 
         # Copy File 의 구분자 설정 (default : fields(\t), lines(\n))
         self.fields = "\t" if fields is None else fields
@@ -24,7 +24,7 @@ class DB2ESBulkConvertor:
         print(f"Copy file delimiter set each {self.fields} and {self.lines}")
 
     def __del__(self):
-        logger.debug("DB2ESBulkConvertor end.")
+        logger.debug("ESDB2FileConvertor end.")
 
     def generate_bulkfile(self, query, filename):
         file_path = os.path.join(src_path, filename)
@@ -64,7 +64,7 @@ def main():
     try:
         if db.conn.closed != 0:
             db = PgsqlConnection()
-        gen = DB2ESBulkConvertor(db=db, fields="$$^^||", lines="\n")
+        gen = ESDB2FileConvertor(db=db, fields="$$^^||", lines="\n")
         result, columns = gen.generate_bulkfile(query, os.path.join('data', 'es_data', 'test_es.txt'))
         print(result)
         print(columns)
